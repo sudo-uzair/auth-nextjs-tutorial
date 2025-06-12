@@ -1,28 +1,45 @@
 import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
-import GoogleProvider from "next-auth/providers/google";
+import bcrypt from 'bcrypt';
+import prisma from '@/lib/prisma.db';
 
-import type { Session, User, Account} from 'next-auth';
+import type { Session, User, Account } from 'next-auth';
 import type { JWT } from 'next-auth/jwt';
+import type { AuthOptions } from 'next-auth';
 
 const authOptions: AuthOptions = {
   providers: [
     CredentialsProvider({
-       id: "Credentials", // Unique ID for this provider
-      name: "Credentials", // Display name for the provider
-      // Define the fields required for login
+      id: "credentials",
+      name: "Credentials",
       credentials: {
         email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        alert(credentials);
-        console.log("credentials__ ", credentials);
-        
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
-       return null
+
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email },
+        });
+
+        if (!user || !user.password) {
+          return null;
+        }
+
+        const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
+        if (!isPasswordValid) {
+          return null;
+        }
+
+        return {
+          id: user.id.toString(),
+          email: user.email,
+          username: user.email.split('@')[0],
+          role: user.role,
+        };
       }
     }),
     GitHubProvider({
@@ -35,34 +52,41 @@ const authOptions: AuthOptions = {
       },
     }),
   ],
+
   callbacks: {
     async jwt({ token, user, account }: { token: JWT; user: User | null; account: Account | null }) {
       if (user) {
-        // token._id = user._id;
+        token.id = user.id;
         token.email = user.email;
         token.username = user.username;
+        token.role = user.role;
       }
       if (account?.provider === 'github') {
-        // Handle GitHub user data
         token.username = user?.name || user?.email?.split('@')[0];
+        token.role = 'user';
       }
       return token;
     },
     async session({ session, token }: { session: Session; token: JWT }) {
       if (token) {
-        // session.user._id = token._id;
+        session.user.id = token.id;
         session.user.email = token.email;
         session.user.username = token.username;
+        session.user.role = token.role;
       }
       return session;
     }
   },
+
   session: {
     strategy: "jwt"
   },
+
   pages: {
     signIn: '/sign-in'
   },
+
   secret: process.env.NEXTAUTH_SECRET
 };
+
 export default authOptions;

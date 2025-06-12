@@ -21,7 +21,7 @@ const SignOut = () => {
   return (
     <div className="flex justify-center">
       <Button 
-        variant="destructive" 
+        variant="outline" 
         onClick={handleSignOut}
         disabled={isLoading}
       >

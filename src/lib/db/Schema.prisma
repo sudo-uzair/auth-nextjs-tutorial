@@ -1,5 +1,5 @@
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -8,8 +8,34 @@ generator client {
 }
 
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  password  String?
+  id         String     @id @default(cuid())
+  email      String     @unique
+  password   String?
+  resetToken String?
+  role       String     @default("user")
+  projects   Project[]
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+}
 
+model Project {
+  id          String  @id @default(cuid())
+  name        String
+  budget      Float
+  status      String
+  clientName  String
+  clientemail String
+  userId      String
+  user        User    @relation(fields: [userId], references: [id])  // Relation to User
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  content    String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  senderId   String
+  receiverId String
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id])  // Relation to User for sender
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id]) // Relation to User for receiver
 }

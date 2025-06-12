@@ -1,9 +1,9 @@
 "use client"
-import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@/app/globals.css";
 import { ReactNode } from "react";
 import { SessionProvider } from "next-auth/react";
+import { Toaster } from "@/components/ui/toaster"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,10 +25,10 @@ const Layout = ({ children }: LayoutProps) => {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <main className="flex items-center justify-center min-h-screen bg-gray-100">
-          <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <main className="">
+          <div className="bg-white p-8 w-full">
           <SessionProvider>{children}</SessionProvider>
-  
+          <Toaster />
           </div>
         </main>
       </body>

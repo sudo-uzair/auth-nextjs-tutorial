@@ -6,47 +6,55 @@ import { Input } from "@/components/ui/input";
 import { signIn, getSession } from "next-auth/react";
 import Link from "next/link";
 import { useState } from "react";
-import { useRouter} from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { validationSchema, ValidationSchema } from "@/lib/validations/auth";
 
 const SignInPage = () => {
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [serverError, setServerError] = useState("");
   const router = useRouter();
 
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<ValidationSchema>({
+    resolver: zodResolver(validationSchema),
+    mode:"onChange"
+  });
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError("");
-    
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
+  const onSubmit = async (data: ValidationSchema) => {
+    setServerError("");
     try {
       const res = await signIn("credentials", {
-        email,
-        password,
+        ...data,
         redirect: false,
       });
+
       if (res?.ok) {
-        // Refresh session and redirect
-        await getSession();
-        router.push("/dashboard");
+        const session = await getSession();
+        if (session?.user?.role === "user") {
+          router.push("/client-dashboard");
+        } else if (session?.user?.role === "admin") {
+          router.push("/dashboard");
+        } else {
+          router.push("/");
+        }
         router.refresh();
       } else {
-        setError("Invalid credentials. Please check your email and password.");
+        setServerError("Invalid credentials. Please check your email and password.");
       }
     } catch (error) {
-      setError("An error occurred during sign in. Please try again.");
       console.error("Sign in error:", error);
-    } finally {
-      setIsLoading(false);
+      setServerError("An error occurred during sign in. Please try again.");
     }
   };
 
   return (
     <div className="w-full max-w-sm mx-auto space-y-6 p-6">
       <h1 className="text-2xl font-bold text-center mb-6">Sign In</h1>
+
       <GithubSignIn />
 
       <div className="relative">
@@ -60,26 +68,39 @@ const SignInPage = () => {
         </div>
       </div>
 
-      <form className="space-y-4" onSubmit={handleLogin}>
-        <Input 
-          name="email" 
-          placeholder="Email" 
-          type="email" 
-          required 
-          disabled={isLoading}
-          autoComplete="email"
-        />
-        <Input 
-          name="password" 
-          placeholder="Password" 
-          type="password" 
-          required 
-          disabled={isLoading}
-          autoComplete="current-password"
-        />
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-        <Button className="w-full" type="submit" disabled={isLoading}>
-          {isLoading ? "Signing in..." : "Sign In"}
+      <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+        <div>
+          <Input
+            {...register("email")}
+            placeholder="Email"
+            type="email"
+            disabled={isSubmitting}
+            autoComplete="email"
+          />
+          
+        </div>
+ {errors.email && (
+            <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+          )}
+        <div>
+          <Input
+            {...register("password")}
+            placeholder="Password"
+            type="password"
+            disabled={isSubmitting}
+            autoComplete="current-password"
+          />
+          {errors.password && (
+            <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
+          )}
+        </div>
+
+        {serverError && <p className="text-red-500 text-sm">{serverError}</p>}
+
+
+      <Link href="/forget-password" className="text-sm  text-gray-500 underline cursor-pointer">forget password?</Link>
+        <Button className="w-full" type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Signing in..." : "Sign In"}
         </Button>
       </form>
 

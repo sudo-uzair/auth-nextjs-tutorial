@@ -9,7 +9,7 @@ interface Props {
 }
 
 export const SessionWrapper = ({ children }: Props) => {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
 
   useEffect(() => {
@@ -18,7 +18,7 @@ export const SessionWrapper = ({ children }: Props) => {
     }
   }, [status, router]);
 
-  if (status === "loading") return <div>Loading...</div>;
+  if (status === "loading") return ;
 
   return <>
   

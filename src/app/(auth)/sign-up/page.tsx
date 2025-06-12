@@ -1,9 +1,33 @@
+"use client";
+
 import { GithubSignIn } from "@/components/github-sign-in";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
+import { validationSchema, ValidationSchema } from "@/lib/validations/auth";
+import { signUpAction } from "./action";
 
-const Page = async () => {
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+const Page = () => {
+const {
+  register,
+  handleSubmit,
+  formState: { errors, isSubmitting },
+} = useForm<ValidationSchema>({
+  resolver: zodResolver(validationSchema),
+  mode: "onChange",
+});
+
+  const onSubmit = async (data: ValidationSchema) => {
+    const formData = new FormData();
+    formData.append("email", data.email);
+    formData.append("password", data.password);
+
+    await signUpAction(formData);
+  };
+
   return (
     <div className="w-full max-w-sm mx-auto space-y-6">
       <h1 className="text-2xl font-bold text-center mb-6">Create Account</h1>
@@ -21,29 +45,34 @@ const Page = async () => {
         </div>
       </div>
 
-      {/* Email/Password Sign Up */}
-      <form
-        className="space-y-4"
-        action={async () => {
-          "use server";
-        }}
-      >
-        <Input
-          name="email"
-          placeholder="Email"
-          type="email"
-          required
-          autoComplete="email"
-        />
-        <Input
-          name="password"
-          placeholder="Password"
-          type="password"
-          required
-          autoComplete="new-password"
-        />
-        <Button className="w-full" type="submit">
-          Sign Up
+      <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+        <div>
+          <Input
+            {...register("email")}
+            placeholder="Email"
+            type="email"
+            autoComplete="email"
+          />
+          {errors.email && (
+            <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+          )}
+        </div>
+
+        <div>
+          <Input
+            {...register("password")}
+            placeholder="Password"
+            type="password"
+            autoComplete="new-password"
+          />
+          {errors.password && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.password.message}
+            </p>
+          )}
+        </div>
+        <Button className="w-full" type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Creating..." : "Sign Up"}
         </Button>
       </form>
 
