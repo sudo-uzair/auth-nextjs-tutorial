@@ -25,6 +25,7 @@ model Project {
   status      String
   clientName  String
   clientemail String
+  createdAt   DateTime @default(now())
   userId      String
   user        User    @relation(fields: [userId], references: [id])  // Relation to User
 }

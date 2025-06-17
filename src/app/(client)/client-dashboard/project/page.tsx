@@ -14,9 +14,7 @@ export default function CreateProjectPage() {
   const { toast } = useToast()
   const [formData, setFormData] = useState({
     name: '',
-    budget: '',
-    clientName: '',
-    clientemail: ''
+    budget: ''
   })
 
   const [isPending, startTransition] = useTransition()
@@ -35,14 +33,16 @@ export default function CreateProjectPage() {
       return
     }
 
-    const userEmail = session?.user?.email;
     if (!session || status !== 'authenticated') {
       setError('User not authenticated')
       return
     }
 
-    if (!userEmail) {
-      setError('User email not found')
+    const userEmail = session.user.email;
+    const userName = session.user.username;
+
+    if (!userEmail || !userName) {
+      setError('User email or name not found')
       return
     }
 
@@ -51,13 +51,13 @@ export default function CreateProjectPage() {
         name: formData.name,
         budget: budgetNumber,
         status: "Not Started",
-        clientName: formData.clientName,
+        clientName: userName,
         userEmail: userEmail,
-        clientemail: formData.clientemail
+        clientemail: userEmail
       })
 
       if (response.success) {
-        setFormData({ name: '', budget: '', clientName: '', clientemail: '' })
+        setFormData({ name: '', budget: '' })
         toast({
           title: "Success!",
           description: "Project created successfully.",
@@ -98,28 +98,6 @@ export default function CreateProjectPage() {
                 type="number"
                 placeholder="Enter budget"
                 value={formData.budget}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="clientName">Your Name</Label>
-              <Input
-                id="clientName"
-                name="clientName"
-                placeholder="Enter your Name"
-                value={formData.clientName}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div> 
-              <Label htmlFor="clientemail">Your Email</Label>
-              <Input
-                id="clientemail"
-                name="clientemail"
-                placeholder="Enter your Email"
-                value={formData.clientemail}
                 onChange={handleChange}
                 required
               />

@@ -4,6 +4,8 @@ import "@/app/globals.css";
 import { ReactNode } from "react";
 import { SessionProvider } from "next-auth/react";
 import { Toaster } from "@/components/ui/toaster"
+import { AuthProvider } from "@/components/providers/AuthProvider";
+import { SocketProvider } from "@/context/SocketContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,12 +27,18 @@ const Layout = ({ children }: LayoutProps) => {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <main className="">
-          <div className="bg-white p-8 w-full">
-          <SessionProvider>{children}</SessionProvider>
-          <Toaster />
-          </div>
-        </main>
+        <AuthProvider>
+          <SocketProvider>
+            <SessionProvider>
+              <main className="">
+                <div className="bg-white p-8 w-full">
+                  {children}
+                  <Toaster />
+                </div>
+              </main>
+            </SessionProvider>
+          </SocketProvider>
+        </AuthProvider>
       </body>
     </html>
   );

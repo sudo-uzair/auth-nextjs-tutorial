@@ -2,7 +2,8 @@
 
 import prisma from '@/lib/prisma.db'
 import { revalidatePath } from 'next/cache'
-
+import { io } from 'socket.io-client'
+const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000')
 export async function createProject(data: {
   name: string
   budget: number
@@ -30,9 +31,10 @@ export async function createProject(data: {
         userId: user.id,
       },
     })
-    
-    revalidatePath('/projects')
 
+    revalidatePath('/projects')
+   //emit socket event to admin so they can know 
+    socket.emit('project:created', project)
     return { success: true, project }
   } catch (error) {
     console.error('Create project error:', error)
